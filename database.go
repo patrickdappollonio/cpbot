@@ -20,7 +20,7 @@ func dbMustConnect(conn string) *sqlx.DB {
 	// Connect to the database using the configuration provided
 	database, err := sqlx.Connect("mysql", conn)
 
-	// If there's an error, we should stop the
+	// If there's an error, we should stop the system
 	if err != nil {
 		log.Fatal(err)
 	}

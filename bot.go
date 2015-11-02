@@ -14,9 +14,10 @@ type Setup struct {
 	StartDelayAmout  int
 	StartDelayFormat time.Duration
 	DBConnection     string
+	NotUpdateDB      bool
 }
 
-func (s Setup) Do(fn func(config Control, db *sqlx.DB)) {
+func (s Setup) Do(task func(config Control, db *sqlx.DB)) {
 	// Connect to the database
 	database := dbMustConnect(s.DBConnection)
 	defer database.Close()
@@ -49,7 +50,7 @@ func (s Setup) Do(fn func(config Control, db *sqlx.DB)) {
 				time.Sleep(time.Duration(d*s.StartDelayAmout) * s.StartDelayFormat)
 
 				// Execute the worker's task
-				fn(current, db)
+				task(current, db)
 			}(delayer, conf, database)
 
 			// Increment the delayer
@@ -61,7 +62,9 @@ func (s Setup) Do(fn func(config Control, db *sqlx.DB)) {
 	}
 
 	// Update the date to the new generated date
-	updateConfigDate(conf, database, s.BotName)
+	if !s.NotUpdateDB {
+		updateConfigDate(conf, database, s.BotName)
+	}
 
 	// Wait for all workers to finish their job
 	wg.Wait()

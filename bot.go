@@ -28,6 +28,11 @@ func (s Setup) Do(task func(config Control, db *sqlx.DB)) {
 		return
 	}
 
+	// If the current day is before the start date, let's move it to the start date
+	if conf.CurrentDate.Before(conf.RangeStart) {
+		conf.CurrentDate = conf.RangeStart
+	}
+
 	// Create a pool of workers
 	var wg sync.WaitGroup
 
@@ -36,7 +41,7 @@ func (s Setup) Do(task func(config Control, db *sqlx.DB)) {
 
 	// Execute that worker
 	for pos := 0; pos < s.DaysToRetrieve; pos++ {
-		// Let's prevent running on weekends and not running days after the end
+		// Let's prevent running on weekends and not running outside the range
 		if isWeekday(conf.CurrentDate) && !conf.CurrentDate.After(conf.RangeEnd) {
 			// Add a delta worker
 			wg.Add(1)

@@ -30,32 +30,31 @@ func (s Setup) Do(fn func(config Control, db *sqlx.DB)) {
 	// Create a pool of workers
 	var wg sync.WaitGroup
 
+	// Create an internal counter to delay tasks
+	delayer := 0
+
 	// Execute that worker
 	for pos := 0; pos < s.DaysToRetrieve; pos++ {
-		// Add a delta worker
-		wg.Add(1)
+		// Let's prevent running on weekends and not running days after the end
+		if isWeekday(conf.CurrentDate) && !conf.CurrentDate.After(conf.RangeEnd) {
+			// Add a delta worker
+			wg.Add(1)
 
-		// Execute the task
-		go func(inc int, current Control, db *sqlx.DB) {
-			// Remove one task from the queue
-			defer wg.Done()
+			// Execute the task
+			go func(d int, current Control, db *sqlx.DB) {
+				// Remove one task from the queue
+				defer wg.Done()
 
-			// Let's prevent running on weekends
-			if !isWeekday(current.CurrentDate) {
-				return
-			}
+				// Add a sleep function to delay n * time
+				time.Sleep(time.Duration(d*s.StartDelayAmout) * s.StartDelayFormat)
 
-			// Let's not overflow the date
-			if current.CurrentDate.After(current.RangeEnd) {
-				return
-			}
+				// Execute the worker's task
+				fn(current, db)
+			}(delayer, conf, database)
 
-			// Add a sleep function to delay n * time
-			time.Sleep(time.Duration(inc*s.StartDelayAmout) * s.StartDelayFormat)
-
-			// Execute the worker's task
-			fn(current, db)
-		}(pos, conf, database)
+			// Increment the delayer
+			delayer++
+		}
 
 		// Increment day by one
 		conf.CurrentDate = conf.CurrentDate.AddDate(0, 0, 1)

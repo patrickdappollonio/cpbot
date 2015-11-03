@@ -54,7 +54,7 @@ func getConfig(database *sqlx.DB, name string) (Control, bool) {
 	return configuration, shouldrun
 }
 
-func updateConfigDate(conf Control, database *sqlx.DB, name string) {
+func updateConfigDate(conf Control, database *sqlx.DB) {
 	// Set the date to be updated as the last date processed by the bot
 	finaldate := conf.CurrentDate
 
@@ -65,5 +65,5 @@ func updateConfigDate(conf Control, database *sqlx.DB, name string) {
 	}
 
 	// Update database with the new date based on the scraper name
-	database.MustExec("update scraper_control set range_position = ? where name = ? limit 1", finaldate, name)
+	database.MustExec("update scraper_control set range_position = ? where name = ? limit 1", finaldate, conf.Name)
 }

@@ -68,7 +68,7 @@ func (s Setup) Do(task func(config Control, db *sqlx.DB)) {
 
 	// Update the date to the new generated date
 	if !s.NotUpdateDB {
-		updateConfigDate(conf, database, s.BotName)
+		updateConfigDate(conf, database)
 	}
 
 	// Wait for all workers to finish their job
